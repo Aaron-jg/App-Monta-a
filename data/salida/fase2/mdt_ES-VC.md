@@ -1,6 +1,6 @@
 # Modelo de elevaciones — Comunitat Valenciana
 
-Fuente: MDT25 © Instituto Geográfico Nacional (CNIG), CC BY 4.0. Servicio WCS https://servicios.idee.es/wcs-inspire/mdt. Descarga: 2026-10-04T12:17:29+00:00.
+Fuente: MDT25 © Instituto Geográfico Nacional (CNIG), CC BY 4.0. Servicio WCS https://servicios.idee.es/wcs-inspire/mdt. Descarga: 2026-10-04T12:28:43+00:00.
 
 ## Terreno descargado
 
@@ -48,8 +48,8 @@ Altitud del MDT = la máxima en un radio de 50 m alrededor del pico de OSM.
 | node/1243266109 | Puntal de la Canaleta | 1308.0 | 1359.0 | -51.0 |
 | node/11061357556 | - | 682.0 | 633.0 | 49.0 |
 | node/1243280178 | el Castell de Sufera | 518.52 | 470.0 | 48.5 |
-| node/12510224160 | Alto de la Pastora | 844.0 | 881.0 | -37.0 |
 | node/10753792551 | la Picossa | 989.0 | 952.0 | 37.0 |
+| node/12510224160 | Alto de la Pastora | 844.0 | 881.0 | -37.0 |
 | node/3385778023 | el Penyó | 649.0 | 613.0 | 36.0 |
 | node/11074835800 | - | 128.0 | 162.0 | -34.0 |
 | node/9230637906 | Morrón Royo | 533.55 | 501.0 | 32.5 |
