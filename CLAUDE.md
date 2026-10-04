@@ -25,7 +25,7 @@ registren las cimas que han subido.
 | Cimas emblemáticas | Lista manual añadida después para las que no lleguen al umbral |
 | Fuente base | OpenStreetMap (`natural=peak`) |
 | Validación de nombres y altitudes | IGN/CNIG e Institut Cartogràfic Valencià (ICV) |
-| Cálculo de prominencia | Modelo digital de elevaciones del CNIG (LiDAR) |
+| Cálculo de prominencia | MDT25 del IGN/CNIG (LiDAR), descargado por el servicio WCS de la IDEE; MDT05 reservado para afinar casos concretos |
 | Lenguaje de los scripts | Python 3.11 |
 
 ## Plan de trabajo por fases
@@ -46,7 +46,7 @@ Ir fase a fase. Al terminar cada una, enseñar resultados y preguntar antes de s
 | Fase | Estado | Notas |
 |---|---|---|
 | 1 | **Hecha** (2026-10-04, vía GitHub Actions) | 3.616 picos; 87,6 % con nombre; 99,5 % con altitud; 16 parejas de posibles duplicados. Resultados en `data/salida/fase1/` |
-| 2 | No iniciada | |
+| 2 | **Hecha** (2026-10-04, vía GitHub Actions) | MDT25, 455 teselas de 10 km. Altitud OSM vs MDT: mediana 1 m de diferencia, 98,1 % a ±10 m, 5 picos con más de 50 m. Informe en `data/salida/fase2/`; mosaico como archivo descargable de la ejecución |
 | 3 | No iniciada | |
 | 4 | No iniciada | |
 
@@ -107,9 +107,13 @@ requirements.txt          Dependencias de Python
 src/cimas/regiones.py     Definición de regiones (piloto ES-VC; ampliable a España)
 src/cimas/osm.py          Descarga de picos vía Overpass y limpieza básica
 src/cimas/diagnostico.py  Métricas de calidad (nombres, altitud, duplicados, provincias)
+src/cimas/mdt.py          Descarga del MDT del IGN por teselas (WCS) y comparación con OSM
 scripts/fase1_osm.py      Ejecuta la fase 1 y genera el informe
+scripts/fase2_mdt.py      Ejecuta la fase 2 y genera el informe
+.github/workflows/        Ejecución de cada fase en GitHub Actions
 tests/                    Pruebas automáticas (sin red)
 data/raw/                 Descargas originales (no se versionan)
+data/mdt/                 Teselas y mosaico del MDT (no se versionan)
 data/salida/              Resultados generados
 ```
 
@@ -118,6 +122,7 @@ data/salida/              Resultados generados
 ```bash
 pip install -r requirements.txt
 python scripts/fase1_osm.py --region ES-VC   # descarga + diagnóstico
+python scripts/fase2_mdt.py --region ES-VC   # MDT25 + comparación con OSM
 python -m pytest tests                        # pruebas
 ```
 
@@ -130,7 +135,10 @@ python -m pytest tests                        # pruebas
 - Aunque se autoricen esos dominios, la conexión se corta antes de recibir respuesta
   (comprobado el 2026-10-04). Alternativa sin instalar nada: el flujo de GitHub Actions
   `.github/workflows/fase1_osm.yml` ejecuta la fase 1 en los servidores de GitHub y sube
-  los resultados de `data/salida/fase1/` a la rama.
+  los resultados de `data/salida/fase1/` a la rama. Igual con `fase2_mdt.yml`.
+- El centro de descargas del CNIG tampoco responde desde GitHub; el MDT se obtiene por el
+  servicio WCS `https://servicios.idee.es/wcs-inspire/mdt` (coberturas `Elevacion25830_25`,
+  `Elevacion25830_5`...; para Canarias, `Elevacion4083_*`). Devuelve metros enteros (int16).
 
 ## Convenciones
 
