@@ -1,0 +1,30 @@
+{
+  "mdt": {
+    "ancho_px": 8000,
+    "alto_px": 14000,
+    "resolucion_m": 25.0,
+    "tipo_dato_original": "int16",
+    "nodata_original": null,
+    "pct_sin_dato": 35.0,
+    "altitud_min": -3.0,
+    "altitud_max": 2017.0,
+    "tamano_mb": 39.6,
+    "modelo": "MDT25",
+    "cobertura_wcs": "Elevacion25830_25",
+    "epsg": 25830,
+    "teselas": 455,
+    "lado_tesela_km": 10,
+    "margen_km": 15,
+    "fecha_descarga": "2026-10-04T12:17:29+00:00"
+  },
+  "comparacion_osm": {
+    "picos_comparados": 3597,
+    "picos_sin_dato_mdt": 0,
+    "diferencia_mediana_m": 1.0,
+    "diferencia_abs_mediana_m": 1.0,
+    "pct_dentro_5m": 92.8,
+    "pct_dentro_10m": 98.1,
+    "pct_dentro_25m": 99.5,
+    "picos_mas_50m": 5
+  }
+}
