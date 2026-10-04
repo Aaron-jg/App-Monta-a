@@ -1,0 +1,68 @@
+# Ejecuta la fase 4 (catálogo final de cimas) en los servidores de GitHub, que sí tienen
+# acceso a Overpass para buscar municipio y comarca, y guarda el catálogo en la rama.
+#
+# Se lanza sola al subir cambios a este archivo, al código de la fase 4 o a la lista
+# manual de cimas emblemáticas, o a mano desde la pestaña "Actions" ("Run workflow").
+name: Fase 4 - catálogo
+
+on:
+  workflow_dispatch:
+    inputs:
+      region:
+        description: "Código ISO de la región (p. ej. ES-VC)"
+        default: "ES-VC"
+      umbral:
+        description: "Prominencia mínima en metros"
+        default: "30"
+  push:
+    branches: ["claude/**"]
+    paths:
+      - ".github/workflows/fase4_catalogo.yml"
+      - "scripts/fase4_catalogo.py"
+      - "src/cimas/catalogo.py"
+      - "src/cimas/admin.py"
+      - "data/manual/cimas_emblematicas.csv"
+
+permissions:
+  contents: write
+
+env:
+  REGION: ${{ inputs.region || 'ES-VC' }}
+  UMBRAL: ${{ inputs.umbral || '30' }}
+
+jobs:
+  fase4:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Instalar dependencias
+        run: pip install -r requirements.txt
+
+      - name: Pruebas
+        run: python -m pytest tests -q
+
+      - name: Catálogo
+        run: python scripts/fase4_catalogo.py --region "$REGION" --umbral "$UMBRAL"
+
+      - name: Informe en el resumen de la ejecución
+        run: cat data/salida/fase4/catalogo_*.md >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Subir resultados a la rama
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/salida/fase4 data/catalogo
+          if git diff --cached --quiet; then
+            echo "Sin cambios en los resultados"
+          else
+            git commit -m "Fase 4: catálogo de cimas (prominencia ≥ $UMBRAL m)"
+            git pull --rebase origin "$GITHUB_REF_NAME"
+            git push
+          fi

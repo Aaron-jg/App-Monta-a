@@ -21,6 +21,7 @@ class Region:
     nombre: str
     provincias: tuple[Provincia, ...]
     epsg_utm: int   # sistema de coordenadas métrico (ETRS89 / UTM) para medir distancias
+    ine: str = ""   # código INE de comunidad autónoma (2 dígitos)
 
 
 REGIONES: dict[str, Region] = {
@@ -33,6 +34,7 @@ REGIONES: dict[str, Region] = {
             Provincia("ES-V", "46", "Valencia/València"),
         ),
         epsg_utm=25830,
+        ine="10",
     ),
 }
 
