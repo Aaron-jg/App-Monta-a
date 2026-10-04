@@ -64,7 +64,8 @@ def informe_md(region_nombre: str, modelo: str, tabla: pd.DataFrame, prom: pd.Da
         "",
         "Prominencia = altitud de la cima − altitud del collado más alto por el que hay que bajar "
         "para llegar a un terreno más alto. Calculada sobre el MDT, con la cima del MDT más alta "
-        f"a menos de {r['radio_busqueda_m']:.0f} m de cada pico de OSM.",
+        f"a menos de {r['radio_busqueda_m']:.0f} m de cada pico de OSM (si esa cima es solo una "
+        "irregularidad de menos de 10 m junto a la cumbre, se toma la cumbre).",
         "",
         "## Cuántas cimas salen con cada umbral",
         "",
@@ -82,8 +83,8 @@ def informe_md(region_nombre: str, modelo: str, tabla: pd.DataFrame, prom: pd.Da
         )
     lineas += [
         "",
-        "\\* Dudosas: su collado clave cae fuera del terreno descargado y la prominencia calculada "
-        "es solo un mínimo; podrían superar el umbral.",
+        "\\* Dudosas: su montaña toca el borde del terreno descargado antes de llegar al collado, "
+        "así que solo se conoce un mínimo que no llega al umbral, pero el máximo posible sí.",
         "",
         "### Por provincia",
         "",
@@ -111,7 +112,7 @@ def informe_md(region_nombre: str, modelo: str, tabla: pd.DataFrame, prom: pd.Da
         f"| Picos de OSM sin cima propia en el MDT (hombros o resaltes; prominencia 0) | "
         f"{r['sin_cima_en_mdt']} |",
         f"| Picos de OSM que caen en la misma cima del MDT que otro | {r['picos_comparten_cima']} |",
-        f"| Picos con prominencia solo mínima (collado fuera del recorte) | {r['prominencia_minima']} |",
+        f"| Picos con prominencia acotada por el borde del recorte (mín.) | {r['prominencia_minima']} |",
         f"| Distancia mediana del nodo de OSM a la cima del MDT | {r['distancia_mediana_m']} m |",
         f"| Tiempo de cálculo | {r['segundos_calculo']} s |",
         "",

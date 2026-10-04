@@ -30,11 +30,39 @@ def test_prominencia_dos_montes():
     assert r["prominencia"][b] == 200
     assert not r["es_minima"][b]
     assert z.ravel()[r["collado"][b]] == 600
+    assert r["cima_padre"][b] == a
     # A es el más alto: su collado está fuera del recorte -> prominencia mínima garantizada
-    assert r["es_minima"][a]
-    assert r["prominencia"][a] == 1000 - 400      # el borde más alto que toca está a 400 m
+    assert r["es_minima"][a] and r["es_cima"][a]
+    assert r["prominencia_minima"][a] == 1000 - 400   # el borde más alto que toca está a 400 m
+    assert np.isnan(r["prominencia"][a])               # máximo desconocido
     # Un píxel de ladera no es cima
-    assert r["prominencia"][10 * ancho + 12] == 0
+    assert not r["es_cima"][10 * ancho + 12]
+
+
+def test_borde_no_contamina_otras_cimas():
+    # Un monte alto que toca el borde no convierte en dudosa a la cima vecina:
+    # B se une a A por un collado interior, así que su prominencia es exacta
+    z = _dos_montes()
+    z[10, 0:10] = 990       # cresta de A que llega al borde a mucha altura
+    r = calcular_prominencias(z)
+    b = 10 * z.shape[1] + 30
+    assert r["prominencia"][b] == 200 and not r["es_minima"][b]
+
+
+def test_irregularidad_junto_a_la_cumbre():
+    from rasterio.transform import from_origin
+    from pyproj import Transformer
+
+    z = _dos_montes()
+    z[10, 33] = z[10, 32] + 3        # bulto de 3 m a 75 m de la cima B
+    t = from_origin(700_000, 4_290_000, 25, 25)
+    r = calcular_prominencias(z)
+    x, y = 700_000 + 33 * 25 + 12.5, 4_290_000 - 10 * 25 - 12.5
+    lon, lat = Transformer.from_crs(25830, 4326, always_xy=True).transform(x, y)
+    df = pd.DataFrame({"osm_id": ["node/1"], "nombre": ["B"], "provincia": ["V"],
+                       "altitud_osm": [800.0], "lat": [lat], "lon": [lon]})
+    p = prominencia_picos(df, z, t, 25830, r, radio_m=30)
+    assert p.loc[0, "altitud_mdt"] == 800 and p.loc[0, "prominencia"] == 200
 
 
 def test_nodata_es_borde():
@@ -42,7 +70,7 @@ def test_nodata_es_borde():
     z[:, 20] = np.nan        # sin dato justo en el collado: B pasa a tener prominencia mínima
     r = calcular_prominencias(z)
     b = 10 * z.shape[1] + 30
-    assert r["es_minima"][b]
+    assert r["es_minima"][b] and r["prominencia_minima"][b] == 200
 
 
 def test_asignar_picos_y_umbrales():
