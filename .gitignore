@@ -1,0 +1,7 @@
+__pycache__/
+*.pyc
+.pytest_cache/
+.venv/
+# Descargas brutas y modelos de elevaciones (pesados; se regeneran con los scripts)
+data/raw/
+data/mdt/
