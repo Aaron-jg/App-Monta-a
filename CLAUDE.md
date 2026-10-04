@@ -45,7 +45,7 @@ Ir fase a fase. Al terminar cada una, enseñar resultados y preguntar antes de s
 
 | Fase | Estado | Notas |
 |---|---|---|
-| 1 | Código listo, ejecución vía GitHub Actions | La red del entorno en la nube no llega a `overpass-api.de` (ver "Entorno") |
+| 1 | **Hecha** (2026-10-04, vía GitHub Actions) | 3.616 picos; 87,6 % con nombre; 99,5 % con altitud; 16 parejas de posibles duplicados. Resultados en `data/salida/fase1/` |
 | 2 | No iniciada | |
 | 3 | No iniciada | |
 | 4 | No iniciada | |
