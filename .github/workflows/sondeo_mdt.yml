@@ -1,0 +1,21 @@
+# Temporal: comprueba qué coberturas de elevación ofrece el servicio WCS del IGN.
+name: Sondeo MDT
+on:
+  push:
+    branches: ["claude/**"]
+    paths: [".github/workflows/sondeo_mdt.yml"]
+jobs:
+  sondeo:
+    runs-on: ubuntu-latest
+    steps:
+      - run: |
+          set -x
+          curl -sS -m 60 "https://servicios.idee.es/wcs-inspire/mdt?service=WCS&request=GetCapabilities&version=2.0.1" -o cap.xml || true
+          head -c 300 cap.xml; echo
+          grep -oE '<wcs:CoverageId>[^<]+' cap.xml | sed 's/<wcs:CoverageId>//' || true
+          for c in Elevacion25830_25 Elevacion25830_5 Elevacion4258_25; do
+            curl -sS -m 60 "https://servicios.idee.es/wcs-inspire/mdt?service=WCS&request=DescribeCoverage&version=2.0.1&CoverageId=$c" | head -c 2500; echo; echo ----
+          done
+          curl -sS -m 120 "https://servicios.idee.es/wcs-inspire/mdt?service=WCS&request=GetCoverage&version=2.0.1&CoverageId=Elevacion25830_25&subset=x(720000,725000)&subset=y(4285000,4290000)&format=image/tiff" -o t.tif -w "%{http_code} %{content_type} %{size_download}\n"
+          file t.tif; head -c 400 t.tif | strings | head
+          curl -sS -m 30 -o /dev/null -w "cnig %{http_code}\n" https://centrodedescargas.cnig.es/CentroDescargas/ || true
