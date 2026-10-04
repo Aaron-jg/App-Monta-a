@@ -19,7 +19,6 @@ from __future__ import annotations
 import argparse
 import json
 import sys
-from datetime import datetime, timezone
 from pathlib import Path
 
 import pandas as pd
@@ -28,8 +27,7 @@ RAIZ = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(RAIZ / "src"))
 
 from cimas.mdt import (  # noqa: E402
-    WCS_URL, a_utm, descargar_teselas, muestrear_picos, obtener_modelo,
-    resumen_comparacion, teselas_necesarias, unir_teselas,
+    WCS_URL, muestrear_picos, obtener_modelo, preparar_mosaico, resumen_comparacion,
 )
 from cimas.regiones import obtener_region  # noqa: E402
 
@@ -103,22 +101,10 @@ def main() -> None:
     epsg = region.epsg_utm
     picos = pd.read_csv(RAIZ / "data" / "salida" / "fase1" / f"picos_osm_{region.iso}.csv")
 
-    x, y = a_utm(picos["lat"], picos["lon"], epsg)
-    lado = args.lado_km * 1000
-    teselas = teselas_necesarias(x, y, lado, args.margen_km * 1000)
-    print(f"{region.nombre}: {len(picos)} picos -> {len(teselas)} teselas de {args.lado_km} km "
-          f"del {modelo.nombre} ({modelo.cobertura(epsg)})")
-
-    fecha = datetime.now(timezone.utc).isoformat(timespec="seconds")
-    dir_teselas = RAIZ / "data" / "mdt" / "teselas" / f"{modelo.nombre}_{epsg}"
-    rutas = descargar_teselas(modelo, epsg, teselas, lado, dir_teselas)
-
-    ruta_mdt = RAIZ / "data" / "mdt" / f"{modelo.nombre}_{region.iso}.tif"
-    print("Uniendo teselas...")
-    info = unir_teselas(rutas, ruta_mdt)
-    info.update({"modelo": modelo.nombre, "cobertura_wcs": modelo.cobertura(epsg), "epsg": epsg,
-                 "teselas": len(teselas), "lado_tesela_km": args.lado_km,
-                 "margen_km": args.margen_km, "fecha_descarga": fecha})
+    print(region.nombre)
+    ruta_mdt, info = preparar_mosaico(picos, epsg, modelo, region.iso, RAIZ / "data" / "mdt",
+                                      args.lado_km, args.margen_km)
+    fecha = info["fecha_descarga"]
 
     print("Comparando con las altitudes de OSM...")
     comp = muestrear_picos(picos, ruta_mdt, epsg)

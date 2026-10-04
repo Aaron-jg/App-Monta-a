@@ -224,3 +224,25 @@ def resumen_comparacion(comp: pd.DataFrame) -> dict:
         "pct_dentro_25m": round(100 * float((a <= 25).mean()), 1) if d.size else None,
         "picos_mas_50m": int((a > 50).sum()),
     }
+
+
+def preparar_mosaico(picos: pd.DataFrame, epsg: int, modelo: ModeloMDT, region_iso: str,
+                     dir_mdt: Path, lado_km: int = 10, margen_km: int = 15) -> tuple[Path, dict]:
+    """Descarga (o reutiliza) las teselas alrededor de los picos y crea el mosaico."""
+    from datetime import datetime, timezone
+
+    x, y = a_utm(picos["lat"], picos["lon"], epsg)
+    lado = lado_km * 1000
+    teselas = teselas_necesarias(x, y, lado, margen_km * 1000)
+    print(f"{len(picos)} picos -> {len(teselas)} teselas de {lado_km} km "
+          f"del {modelo.nombre} ({modelo.cobertura(epsg)})")
+    fecha = datetime.now(timezone.utc).isoformat(timespec="seconds")
+    rutas = descargar_teselas(modelo, epsg, teselas, lado,
+                              dir_mdt / "teselas" / f"{modelo.nombre}_{epsg}")
+    ruta = dir_mdt / f"{modelo.nombre}_{region_iso}.tif"
+    print("Uniendo teselas...")
+    info = unir_teselas(rutas, ruta)
+    info.update({"modelo": modelo.nombre, "cobertura_wcs": modelo.cobertura(epsg), "epsg": epsg,
+                 "teselas": len(teselas), "lado_tesela_km": lado_km, "margen_km": margen_km,
+                 "fecha_descarga": fecha})
+    return ruta, info

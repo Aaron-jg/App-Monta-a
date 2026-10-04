@@ -1,0 +1,73 @@
+# Ejecuta la fase 3 (prominencia de cada pico y comparación de umbrales) en los
+# servidores de GitHub y guarda los resultados en la propia rama.
+# Reutiliza las teselas del MDT que dejó guardadas la fase 2 (si no están, las descarga).
+#
+# Se lanza sola al subir cambios a este archivo o al código de la fase 3,
+# o a mano desde la pestaña "Actions" del repositorio (botón "Run workflow").
+name: Fase 3 - prominencia
+
+on:
+  workflow_dispatch:
+    inputs:
+      region:
+        description: "Código ISO de la región (p. ej. ES-VC)"
+        default: "ES-VC"
+      mdt:
+        description: "Modelo: MDT25, MDT05 o MDT200"
+        default: "MDT25"
+  push:
+    branches: ["claude/**"]
+    paths:
+      - ".github/workflows/fase3_prominencia.yml"
+      - "scripts/fase3_prominencia.py"
+      - "src/cimas/prominencia.py"
+
+permissions:
+  contents: write
+
+env:
+  REGION: ${{ inputs.region || 'ES-VC' }}
+  MDT: ${{ inputs.mdt || 'MDT25' }}
+
+jobs:
+  fase3:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Instalar dependencias
+        run: pip install -r requirements.txt
+
+      - name: Pruebas
+        run: python -m pytest tests -q
+
+      - name: Recuperar teselas ya descargadas
+        uses: actions/cache@v4
+        with:
+          path: data/mdt/teselas
+          key: teselas-${{ env.MDT }}-${{ env.REGION }}-v1
+
+      - name: Cálculo de prominencias
+        run: python scripts/fase3_prominencia.py --region "$REGION" --mdt "$MDT"
+
+      - name: Informe en el resumen de la ejecución
+        run: cat data/salida/fase3/prominencia_*.md >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Subir resultados a la rama
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/salida/fase3
+          if git diff --cached --quiet; then
+            echo "Sin cambios en los resultados"
+          else
+            git commit -m "Fase 3: prominencia y comparación de umbrales ($MDT)"
+            git pull --rebase origin "$GITHUB_REF_NAME"
+            git push
+          fi
