@@ -47,7 +47,7 @@ Ir fase a fase. Al terminar cada una, enseñar resultados y preguntar antes de s
 |---|---|---|
 | 1 | **Hecha** (2026-10-04, vía GitHub Actions) | 3.616 picos; 87,6 % con nombre; 99,5 % con altitud; 16 parejas de posibles duplicados. Resultados en `data/salida/fase1/` |
 | 2 | **Hecha** (2026-10-04, vía GitHub Actions) | MDT25, 455 teselas de 10 km. Altitud OSM vs MDT: mediana 1 m de diferencia, 98,1 % a ±10 m, 5 picos con más de 50 m. Informe en `data/salida/fase2/`; mosaico como archivo descargable de la ejecución |
-| 3 | No iniciada | |
+| 3 | **Hecha** (2026-10-04, vía GitHub Actions) | Prominencia sobre MDT25 (inundación descendente con unión de regiones). Cimas distintas: 3.583. Con ≥30 m: 1.570; ≥50 m: 967; ≥100 m: 396. Solo 2 con prominencia acotada por el borde (ambas >100 m). Resultados en `data/salida/fase3/` |
 | 4 | No iniciada | |
 
 ## Criterios de calidad
@@ -108,8 +108,10 @@ src/cimas/regiones.py     Definición de regiones (piloto ES-VC; ampliable a Esp
 src/cimas/osm.py          Descarga de picos vía Overpass y limpieza básica
 src/cimas/diagnostico.py  Métricas de calidad (nombres, altitud, duplicados, provincias)
 src/cimas/mdt.py          Descarga del MDT del IGN por teselas (WCS) y comparación con OSM
+src/cimas/prominencia.py  Cálculo de la prominencia y tabla de umbrales
 scripts/fase1_osm.py      Ejecuta la fase 1 y genera el informe
 scripts/fase2_mdt.py      Ejecuta la fase 2 y genera el informe
+scripts/fase3_prominencia.py  Ejecuta la fase 3 y genera el informe
 .github/workflows/        Ejecución de cada fase en GitHub Actions
 tests/                    Pruebas automáticas (sin red)
 data/raw/                 Descargas originales (no se versionan)
@@ -123,6 +125,7 @@ data/salida/              Resultados generados
 pip install -r requirements.txt
 python scripts/fase1_osm.py --region ES-VC   # descarga + diagnóstico
 python scripts/fase2_mdt.py --region ES-VC   # MDT25 + comparación con OSM
+python scripts/fase3_prominencia.py --region ES-VC   # prominencia + umbrales
 python -m pytest tests                        # pruebas
 ```
 
