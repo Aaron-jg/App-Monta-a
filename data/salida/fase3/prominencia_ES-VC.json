@@ -1,0 +1,87 @@
+{
+  "region": "ES-VC",
+  "mdt": "MDT25",
+  "radio_busqueda_m": 75.0,
+  "picos_osm": 3616,
+  "sin_cima_en_mdt": 117,
+  "picos_comparten_cima": 41,
+  "prominencia_minima": 1364,
+  "distancia_mediana_m": 16.2,
+  "reparto": {
+    "< 10 m": 826,
+    "10–30 m": 1249,
+    "30–50 m": 595,
+    "50–100 m": 563,
+    "100–300 m": 329,
+    "≥ 300 m": 54
+  },
+  "umbrales": [
+    {
+      "ambito": "Total",
+      "cimas": 3595,
+      "prom_30m": 1529,
+      "prom_30m_con_nombre": 1436,
+      "prom_30m_dudosas": 624,
+      "prom_50m": 935,
+      "prom_50m_con_nombre": 898,
+      "prom_50m_dudosas": 854,
+      "prom_100m": 377,
+      "prom_100m_con_nombre": 366,
+      "prom_100m_dudosas": 1128
+    },
+    {
+      "ambito": "Alicante/Alacant",
+      "cimas": 872,
+      "prom_30m": 372,
+      "prom_30m_con_nombre": 322,
+      "prom_30m_dudosas": 99,
+      "prom_50m": 238,
+      "prom_50m_con_nombre": 219,
+      "prom_50m_dudosas": 121,
+      "prom_100m": 114,
+      "prom_100m_con_nombre": 108,
+      "prom_100m_dudosas": 158
+    },
+    {
+      "ambito": "Castellón/Castelló",
+      "cimas": 1350,
+      "prom_30m": 597,
+      "prom_30m_con_nombre": 579,
+      "prom_30m_dudosas": 270,
+      "prom_50m": 353,
+      "prom_50m_con_nombre": 343,
+      "prom_50m_dudosas": 386,
+      "prom_100m": 128,
+      "prom_100m_con_nombre": 127,
+      "prom_100m_dudosas": 519
+    },
+    {
+      "ambito": "Sin provincia única",
+      "cimas": 15,
+      "prom_30m": 6,
+      "prom_30m_con_nombre": 6,
+      "prom_30m_dudosas": 2,
+      "prom_50m": 2,
+      "prom_50m_con_nombre": 2,
+      "prom_50m_dudosas": 3,
+      "prom_100m": 1,
+      "prom_100m_con_nombre": 1,
+      "prom_100m_dudosas": 4
+    },
+    {
+      "ambito": "Valencia/València",
+      "cimas": 1358,
+      "prom_30m": 554,
+      "prom_30m_con_nombre": 529,
+      "prom_30m_dudosas": 253,
+      "prom_50m": 342,
+      "prom_50m_con_nombre": 334,
+      "prom_50m_dudosas": 344,
+      "prom_100m": 134,
+      "prom_100m_con_nombre": 130,
+      "prom_100m_dudosas": 447
+    }
+  ],
+  "segundos_calculo": 32,
+  "mdt_fecha_descarga": "2026-10-04T12:28:47+00:00"
+}
