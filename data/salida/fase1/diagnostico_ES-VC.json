@@ -1,0 +1,45 @@
+{
+  "total_picos": 3616,
+  "nodos": 3616,
+  "vias": 0,
+  "con_nombre": 3169,
+  "con_nombre_pct": 87.6,
+  "con_nombre_ca": 858,
+  "con_altitud": 3597,
+  "con_altitud_pct": 99.5,
+  "ele_no_interpretable": 0,
+  "con_nombre_y_altitud": 3163,
+  "ids_repetidos": 0,
+  "parejas_cercania": 10,
+  "parejas_mismo_nombre": 6,
+  "por_provincia": [
+    {
+      "provincia": "Alicante/Alacant",
+      "picos": 883,
+      "con_nombre": 615,
+      "con_altitud": 878,
+      "altitud_max": 1559.4
+    },
+    {
+      "provincia": "Castellón/Castelló",
+      "picos": 1353,
+      "con_nombre": 1291,
+      "con_altitud": 1345,
+      "altitud_max": 1815.0
+    },
+    {
+      "provincia": "Sin provincia única",
+      "picos": 15,
+      "con_nombre": 14,
+      "con_altitud": 13,
+      "altitud_max": 1025.0
+    },
+    {
+      "provincia": "Valencia/València",
+      "picos": 1365,
+      "con_nombre": 1249,
+      "con_altitud": 1361,
+      "altitud_max": 1838.0
+    }
+  ]
+}

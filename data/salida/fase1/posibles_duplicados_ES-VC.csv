@@ -1,0 +1,17 @@
+motivo,distancia_m,osm_id_a,nombre_a,altitud_a,osm_id_b,nombre_b,altitud_b
+cercania,19.4,node/687390743,,746.0,node/11076586070,,743.0
+cercania,42.8,node/687390758,,742.0,node/11076586070,,743.0
+cercania,23.2,node/1242135735,Penyes del Pla de Magarra,130.0,node/9021071206,,
+cercania,6.8,node/1242139600,Penyons de la Perereta,829.0,node/10665751491,,829.0
+cercania,18.4,node/1243236884,,626.0,node/5935411510,el Mallol,619.0
+mismo_nombre,73.2,node/1243269730,Tossal de les Mallades,1476.0,node/13476986984,Tossal de les Mallades,1475.0
+mismo_nombre,7.2,node/1243388423,Pico Colaita,828.0,node/12175091676,Pico Colaita,828.0
+mismo_nombre,27.9,node/1243439039,Peña del Águila,1304.0,node/9991755797,Peña del Aguila,1304.0
+cercania,16.5,node/1243467210,Los Cinco Pinos,1177.0,node/8041980205,Alto de Cinco Pinos,1176.0
+cercania,17.3,node/1249819607,la Mamelleta,551.0,node/10609184085,Tossal de Marraix,551.0
+mismo_nombre,432.9,node/1268536290,Cabezo Redondo,575.0,node/11415111067,Cabezo Redondo,566.0
+mismo_nombre,414.3,node/8580958576,Tossal de Vallés,240.0,node/14216361902,Tossal de Vallés,282.0
+cercania,30.3,node/9776371609,el Portell de Just d'Alfafara,1087.0,node/11450626922,Portell d'Alfafara,1087.0
+cercania,26.7,node/9984197250,Peñas de Dios,1167.0,node/12596458790,Peña de en Medio,1166.0
+mismo_nombre,294.3,node/10940352534,Montcúdio,524.0,node/12571887082,Montcúdio,520.0
+cercania,36.0,node/11076399389,Tossal de Venturo,417.0,node/11076399390,,415.0
