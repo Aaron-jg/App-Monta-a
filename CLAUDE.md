@@ -116,6 +116,10 @@ scripts/fase2_mdt.py      Ejecuta la fase 2 y genera el informe
 scripts/fase3_prominencia.py  Ejecuta la fase 3 y genera el informe
 scripts/fase4_catalogo.py Ejecuta la fase 4 y genera el catálogo
 supabase/catalogo_cimas.sql   Tabla catalogo.cimas (PostGIS, RLS de lectura pública)
+supabase/app_usuarios.sql     Tablas de usuarios (perfiles, consentimientos, ascensiones, tracks) con RLS y funciones RGPD
+supabase/vistas_public.sql    Opcional: vistas en public para FlutterFlow (misma seguridad)
+docs/RGPD.md              Qué datos personales se guardan, para qué y cómo se ejercen los derechos
+tests/sql/                Pruebas de los scripts SQL (tests/sql/ejecutar.sh, también en GitHub Actions)
 data/manual/cimas_emblematicas.csv  Cimas que entran aunque no lleguen al umbral
 data/catalogo/            Registro de identificadores de cima (no borrar: da estabilidad a los id)
 .github/workflows/        Ejecución de cada fase en GitHub Actions
@@ -149,6 +153,15 @@ python -m pytest tests                        # pruebas
 - El centro de descargas del CNIG tampoco responde desde GitHub; el MDT se obtiene por el
   servicio WCS `https://servicios.idee.es/wcs-inspire/mdt` (coberturas `Elevacion25830_25`,
   `Elevacion25830_5`...; para Canarias, `Elevacion4083_*`). Devuelve metros enteros (int16).
+
+## Tablas de usuarios (hecho el 2026-10-04)
+
+- Orden de ejecución en Supabase: `catalogo_cimas.sql`, `app_usuarios.sql` y, si se usa
+  FlutterFlow, `vistas_public.sql`. Exponer los esquemas `catalogo` y `app` en la API.
+- Registro de cimas siempre por `app.registrar_ascension()`: calcula en el servidor la
+  distancia a la cumbre (verificada si ≤ 100 m) y no guarda la posición.
+- Probado en PostgreSQL 16 + PostGIS 3.4 con una simulación de Supabase Auth
+  (`tests/sql/supabase_simulado.sql`); falta probarlo en un proyecto Supabase real.
 
 ## Pendiente tras la fase 4
 

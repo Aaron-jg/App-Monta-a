@@ -1,0 +1,32 @@
+# Prueba los scripts de supabase/ (tablas, seguridad por usuario y funciones RGPD) en un
+# PostgreSQL + PostGIS limpio cada vez que cambian.
+name: Pruebas SQL
+
+on:
+  workflow_dispatch:
+  push:
+    branches: ["claude/**"]
+    paths:
+      - ".github/workflows/pruebas_sql.yml"
+      - "supabase/**"
+      - "tests/sql/**"
+
+jobs:
+  sql:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgis/postgis:16-3.4
+        env:
+          POSTGRES_PASSWORD: postgres
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd pg_isready --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      PGHOST: localhost
+      PGUSER: postgres
+      PGPASSWORD: postgres
+    steps:
+      - uses: actions/checkout@v4
+      - name: Ejecutar pruebas
+        run: bash tests/sql/ejecutar.sh
