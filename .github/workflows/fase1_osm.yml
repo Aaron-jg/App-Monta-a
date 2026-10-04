@@ -1,0 +1,63 @@
+# Ejecuta la fase 1 (descarga de picos OSM + diagnóstico) en los servidores de GitHub,
+# que sí tienen acceso a Overpass, y guarda los resultados en la propia rama.
+#
+# Se lanza sola al subir cambios a este archivo o al código de la fase 1,
+# o a mano desde la pestaña "Actions" del repositorio (botón "Run workflow").
+name: Fase 1 - picos OSM
+
+on:
+  workflow_dispatch:
+    inputs:
+      region:
+        description: "Código ISO de la región (p. ej. ES-VC)"
+        default: "ES-VC"
+  push:
+    branches: ["claude/**"]
+    paths:
+      - ".github/workflows/fase1_osm.yml"
+      - "scripts/fase1_osm.py"
+      - "src/cimas/**"
+
+permissions:
+  contents: write
+
+jobs:
+  fase1:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Instalar dependencias
+        run: pip install -r requirements.txt
+
+      - name: Pruebas
+        run: python -m pytest tests -q
+
+      - name: Descarga y diagnóstico
+        run: python scripts/fase1_osm.py --region "${{ inputs.region || 'ES-VC' }}"
+
+      - name: Informe en el resumen de la ejecución
+        run: cat data/salida/fase1/diagnostico_*.md >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Guardar descarga bruta
+        uses: actions/upload-artifact@v4
+        with:
+          name: osm-raw
+          path: data/raw/
+
+      - name: Subir resultados a la rama
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/salida/fase1
+          if git diff --cached --quiet; then
+            echo "Sin cambios en los resultados"
+          else
+            git commit -m "Fase 1: resultados de la descarga y diagnóstico OSM"
+            git push
+          fi

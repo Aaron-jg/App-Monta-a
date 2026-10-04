@@ -45,7 +45,7 @@ Ir fase a fase. Al terminar cada una, enseñar resultados y preguntar antes de s
 
 | Fase | Estado | Notas |
 |---|---|---|
-| 1 | Código listo, **pendiente de ejecutar** | La red del entorno en la nube bloquea `overpass-api.de` (ver "Entorno") |
+| 1 | Código listo, ejecución vía GitHub Actions | La red del entorno en la nube no llega a `overpass-api.de` (ver "Entorno") |
 | 2 | No iniciada | |
 | 3 | No iniciada | |
 | 4 | No iniciada | |
@@ -127,6 +127,10 @@ python -m pytest tests                        # pruebas
   `overpass-api.de`, `download.geofabrik.de` y `centrodedescargas.cnig.es` están
   bloqueados. Para ejecutar las fases hay que añadir esos dominios en
   *Network access* del entorno, o ejecutar los scripts en un ordenador local.
+- Aunque se autoricen esos dominios, la conexión se corta antes de recibir respuesta
+  (comprobado el 2026-10-04). Alternativa sin instalar nada: el flujo de GitHub Actions
+  `.github/workflows/fase1_osm.yml` ejecuta la fase 1 en los servidores de GitHub y sube
+  los resultados de `data/salida/fase1/` a la rama.
 
 ## Convenciones
 
