@@ -7,7 +7,7 @@ import pandas as pd
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
-from cimas.admin import consulta_ubicaciones, elegir_unidades, parsear_ubicaciones  # noqa: E402
+from cimas.admin import tabla_limites, ubicar_en_limites  # noqa: E402
 from cimas.catalogo import (  # noqa: E402
     COLUMNAS, a_geojson, asignar_ids, completar_provincia, construir_catalogo, elegir_altitud,
 )
@@ -16,24 +16,32 @@ from cimas.regiones import obtener_region  # noqa: E402
 REGION = obtener_region("ES-VC")
 
 
-def test_consulta_y_parseo_ubicaciones():
-    q = consulta_ubicaciones([(40.22, -0.35), (38.5, -0.63)], desplazamiento=10)
-    assert q.count("is_in(") == 2 and 'indice="11"' in q
-    respuesta = {"elements": [
-        {"type": "area", "tags": {"boundary": "administrative", "admin_level": "4", "name": "Comunitat Valenciana"}},
-        {"type": "area", "tags": {"boundary": "administrative", "admin_level": "7", "name": "l'Alcalatén"}},
-        {"type": "area", "tags": {"boundary": "administrative", "admin_level": "8", "name": "Vistabella del Maestrat",
-                                  "ine:municipio": "12133"}},
-        {"type": "marcador", "tags": {"indice": "10"}},
-        {"type": "marcador", "tags": {"indice": "11"}},      # punto sin áreas (en el mar)
+def _rel(nombre, nivel, exterior, interior=None, **tags):
+    def via(coords, rol):
+        return {"type": "way", "role": rol, "geometry": [{"lon": x, "lat": y} for x, y in coords]}
+    # El anillo exterior partido en dos vías, como suele venir en OSM
+    miembros = [via(exterior[:3], "outer"), via(exterior[2:] + exterior[:1], "outer")]
+    if interior:
+        miembros.append(via(interior + interior[:1], "inner"))
+    return {"type": "relation", "members": miembros,
+            "tags": {"boundary": "administrative", "admin_level": nivel, "name": nombre, **tags}}
+
+
+def test_limites_y_ubicacion():
+    cuadrado = [(0, 0), (2, 0), (2, 2), (0, 2)]
+    hueco = [(0.5, 0.5), (1, 0.5), (1, 1), (0.5, 1)]
+    datos = {"elements": [
+        _rel("Municipio A", "8", cuadrado, hueco, **{"ine:municipio": "12133"}),
+        _rel("Enclave B", "8", hueco, **{"ref:ine": "12999000000"}),
+        _rel("Comarca C", "7", [(-1, -1), (3, -1), (3, 3), (-1, 3)]),
     ]}
-    areas = parsear_ubicaciones(respuesta)
-    assert elegir_unidades(areas[10]) == {"municipio": "Vistabella del Maestrat",
-                                          "municipio_ine": "12133", "comarca": "l'Alcalatén"}
-    assert elegir_unidades(areas[11])["municipio"] is None
-    # Código desde ref:ine (11 dígitos) si falta ine:municipio
-    assert elegir_unidades([{"boundary": "administrative", "admin_level": "8", "name": "X",
-                             "ref:ine": "46250000000"}])["municipio_ine"] == "46250"
+    limites = tabla_limites(datos)
+    assert sorted(limites["tipo"]) == ["comarca", "municipio", "municipio"]
+    puntos = pd.DataFrame({"lat": [1.5, 0.75, 5.0], "lon": [1.5, 0.75, 5.0]})
+    r = ubicar_en_limites(puntos, limites)
+    assert r.loc[0].tolist() == ["Municipio A", "12133", "Comarca C"]
+    assert r.loc[1].tolist() == ["Enclave B", "12999", "Comarca C"]     # dentro del hueco
+    assert r.loc[2].isna().all()
 
 
 def test_elegir_altitud():

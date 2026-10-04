@@ -1,17 +1,25 @@
 """Municipio y comarca de cada cima a partir de los límites administrativos de OSM.
 
-Se pregunta a Overpass en qué áreas administrativas cae cada punto (`is_in`). De cada
-municipio se toma su código INE (etiqueta `ine:municipio`, o los 5 primeros dígitos de
-`ref:ine`). Las comarcas no tienen código INE: se guarda su nombre.
+Se descargan de una vez los límites de municipios (admin_level 8) y comarcas (admin_level 7)
+de la región con Overpass, se reconstruyen sus polígonos y se mira en cuál cae cada cima.
+Es una sola consulta, en lugar de una por cima.
+
+De cada municipio se toma su código INE (etiqueta `ine:municipio`, o los 5 primeros dígitos
+de `ref:ine`). Las comarcas no tienen código INE: se guarda su nombre.
 
 Datos © colaboradores de OpenStreetMap, licencia ODbL 1.0.
 """
 
 from __future__ import annotations
 
-import time
+import json
+from datetime import datetime, timezone
+from pathlib import Path
 
 import pandas as pd
+from shapely import STRtree
+from shapely.geometry import LineString, Point
+from shapely.ops import polygonize, unary_union
 
 from .osm import ejecutar_overpass
 
@@ -19,30 +27,32 @@ NIVEL_MUNICIPIO = "8"
 NIVEL_COMARCA = "7"
 
 
-def consulta_ubicaciones(puntos: list[tuple[float, float]], desplazamiento: int = 0) -> str:
-    """Consulta Overpass QL con un bloque is_in por punto, separados por un marcador."""
-    bloques = []
-    for k, (lat, lon) in enumerate(puntos, desplazamiento):
-        bloques.append(
-            f'is_in({lat:.7f},{lon:.7f})->.a;\n'
-            f'area.a["boundary"~"^(administrative|political)$"]["admin_level"];\n'
-            f'out tags;\n'
-            f'make marcador indice="{k}";\nout;'
-        )
-    return "[out:json][timeout:600];\n" + "\n".join(bloques)
+def consulta_limites(iso_area: str) -> str:
+    return f"""
+[out:json][timeout:600];
+area["ISO3166-2"="{iso_area}"]->.zona;
+rel(area.zona)["boundary"~"^(administrative|political)$"]["admin_level"~"^({NIVEL_COMARCA}|{NIVEL_MUNICIPIO})$"];
+out geom;
+""".strip()
 
 
-def parsear_ubicaciones(respuesta: dict) -> dict[int, list[dict]]:
-    """Agrupa las áreas devueltas por punto: {índice: [etiquetas de cada área]}."""
-    resultado: dict[int, list[dict]] = {}
-    pendientes: list[dict] = []
-    for e in respuesta.get("elements", []):
-        if e.get("type") == "marcador":
-            resultado[int(e["tags"]["indice"])] = pendientes
-            pendientes = []
-        elif e.get("type") == "area":
-            pendientes.append(e.get("tags", {}))
-    return resultado
+def poligono_relacion(rel: dict):
+    """Polígono de una relación de OSM: anillos exteriores menos anillos interiores."""
+    def anillos(rol_buscado: str):
+        lineas = []
+        for m in rel.get("members", []):
+            rol = m.get("role") or "outer"
+            if m.get("type") == "way" and m.get("geometry") and rol == rol_buscado:
+                coords = [(p["lon"], p["lat"]) for p in m["geometry"]]
+                if len(coords) >= 2:
+                    lineas.append(LineString(coords))
+        return unary_union(list(polygonize(unary_union(lineas)))) if lineas else None
+
+    exterior = anillos("outer")
+    if exterior is None or exterior.is_empty:
+        return None
+    interior = anillos("inner")
+    return exterior.difference(interior) if interior is not None and not interior.is_empty else exterior
 
 
 def _codigo_municipio(tags: dict) -> str | None:
@@ -51,29 +61,57 @@ def _codigo_municipio(tags: dict) -> str | None:
     return codigo.zfill(5) if 1 <= len(codigo) <= 5 else None
 
 
-def elegir_unidades(areas: list[dict]) -> dict:
-    """De las áreas que contienen un punto, extrae municipio y comarca."""
-    municipio = next((a for a in areas if a.get("admin_level") == NIVEL_MUNICIPIO
-                      and a.get("boundary") == "administrative"), None)
-    comarca = next((a for a in areas if a.get("admin_level") == NIVEL_COMARCA), None)
-    return {
-        "municipio": municipio.get("name") if municipio else None,
-        "municipio_ine": _codigo_municipio(municipio) if municipio else None,
-        "comarca": comarca.get("name") if comarca else None,
-    }
+def descargar_limites(region_iso: str, dir_raw: Path) -> dict:
+    datos = ejecutar_overpass(consulta_limites(region_iso))
+    dir_raw.mkdir(parents=True, exist_ok=True)
+    fecha = datetime.now(timezone.utc).date().isoformat()
+    (dir_raw / f"osm_limites_{region_iso}_{fecha}.json").write_text(json.dumps(datos), encoding="utf-8")
+    return datos
 
 
-def ubicar_puntos(df: pd.DataFrame, lote: int = 150) -> pd.DataFrame:
-    """Municipio y comarca de cada fila de df (columnas lat, lon). Mismo orden que df."""
-    puntos = list(zip(df["lat"], df["lon"]))
-    areas: dict[int, list[dict]] = {}
-    for inicio in range(0, len(puntos), lote):
-        consulta = consulta_ubicaciones(puntos[inicio:inicio + lote], inicio)
-        areas.update(parsear_ubicaciones(ejecutar_overpass(consulta)))
-        print(f"  ubicados {min(inicio + lote, len(puntos))}/{len(puntos)}")
-        time.sleep(2)
-    # Qué tipos de área han aparecido (para revisar el resultado en el registro)
-    tipos = pd.Series([(a.get("boundary"), a.get("admin_level")) for lista in areas.values() for a in lista])
-    print("  áreas encontradas (boundary, admin_level):", tipos.value_counts().to_dict())
-    filas = [elegir_unidades(areas.get(k, [])) for k in range(len(puntos))]
-    return pd.DataFrame(filas, index=df.index)
+def tabla_limites(datos: dict) -> pd.DataFrame:
+    """Una fila por municipio o comarca con su polígono."""
+    filas = []
+    for rel in datos.get("elements", []):
+        if rel.get("type") != "relation":
+            continue
+        tags = rel.get("tags", {})
+        nivel = tags.get("admin_level")
+        if nivel == NIVEL_MUNICIPIO and tags.get("boundary") != "administrative":
+            continue
+        geom = poligono_relacion(rel)
+        if geom is None:
+            continue
+        filas.append({"tipo": "municipio" if nivel == NIVEL_MUNICIPIO else "comarca",
+                      "nombre": tags.get("name"), "codigo_ine": _codigo_municipio(tags)
+                      if nivel == NIVEL_MUNICIPIO else None, "geom": geom})
+    return pd.DataFrame(filas, columns=["tipo", "nombre", "codigo_ine", "geom"])
+
+
+def ubicar_en_limites(df: pd.DataFrame, limites: pd.DataFrame) -> pd.DataFrame:
+    """Municipio y comarca de cada fila de df (columnas lat, lon). Mismo índice que df."""
+    resultado = pd.DataFrame({"municipio": None, "municipio_ine": None, "comarca": None},
+                             index=df.index, dtype=object)
+    puntos = [Point(lon, lat) for lat, lon in zip(df["lat"], df["lon"])]
+    for tipo in ("municipio", "comarca"):
+        capa = limites[limites["tipo"] == tipo].reset_index(drop=True)
+        if capa.empty:
+            continue
+        arbol = STRtree(list(capa["geom"]))
+        idx_puntos, idx_geoms = arbol.query(puntos, predicate="intersects")
+        for ip, ig in zip(idx_puntos, idx_geoms):
+            fila = df.index[ip]
+            if resultado.at[fila, tipo] is not None:      # en una línea límite: el primero
+                continue
+            resultado.at[fila, tipo] = capa.at[ig, "nombre"]
+            if tipo == "municipio":
+                resultado.at[fila, "municipio_ine"] = capa.at[ig, "codigo_ine"]
+    return resultado
+
+
+def ubicar_puntos(df: pd.DataFrame, region_iso: str, dir_raw: Path) -> pd.DataFrame:
+    print("  descargando límites de municipios y comarcas...")
+    limites = tabla_limites(descargar_limites(region_iso, dir_raw))
+    print(f"  {int((limites['tipo'] == 'municipio').sum())} municipios, "
+          f"{int((limites['tipo'] == 'comarca').sum())} comarcas")
+    return ubicar_en_limites(df, limites)

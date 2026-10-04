@@ -3,8 +3,8 @@
 Uso:
     python scripts/fase4_catalogo.py --region ES-VC --umbral 30
 
-Necesita las salidas de la fase 1 (picos) y la fase 3 (prominencia). Consulta Overpass
-para el municipio y la comarca de cada cima.
+Necesita las salidas de la fase 1 (picos) y la fase 3 (prominencia). Descarga de Overpass
+los límites de municipios y comarcas para ubicar cada cima.
 
 Entradas manuales:
     data/manual/cimas_emblematicas.csv   osm_id,motivo  (cimas que entran aunque no
@@ -108,7 +108,8 @@ def main() -> None:
 
     print("Buscando municipio y comarca de cada cima en OSM...")
     cat = pd.concat([cat.drop(columns=["municipio", "municipio_ine", "comarca"], errors="ignore"),
-                     ubicar_puntos(cat.rename(columns={"latitud": "lat", "longitud": "lon"}))], axis=1)
+                     ubicar_puntos(cat.rename(columns={"latitud": "lat", "longitud": "lon"}),
+                                   region.iso, RAIZ / "data" / "raw")], axis=1)
     cat = completar_provincia(cat, region)
     cat = asignar_ids(cat, RAIZ / "data" / "catalogo" / f"ids_cimas_{region.iso}.csv", region.epsg_utm)
     cat = cat.sort_values(["provincia_ine", "altitud_m"], ascending=[True, False])[COLUMNAS]
